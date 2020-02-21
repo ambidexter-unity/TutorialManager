@@ -4,6 +4,7 @@ using DG.Tweening;
 using ModestTree;
 using UnityEngine;
 using UnityEngine.UI;
+using Zenject;
 
 namespace Sample
 {
@@ -13,6 +14,13 @@ namespace Sample
 		protected override string[] RequiredStreamingAssets => new string[0];
 		private readonly Lazy<RawImage> _rawImage;
 		private Tween _tween;
+		private Button _button;
+
+		[Inject]
+		private void Construct(Button button)
+		{
+			_button = button;
+		}
 
 		public ButtonTutorialPage()
 		{
@@ -23,6 +31,28 @@ namespace Sample
 		{
 			_rawImage.Value.color = new Color(0, 0, 0, 0);
 			base.Start();
+
+			if (!_button) return;
+
+			LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform) _button.transform.parent);
+
+			var rt = (RectTransform) _button.transform;
+			var clone = Instantiate(_button.gameObject, rt, false);
+			Destroy(clone.GetComponent<ButtonController>());
+			var crt = (RectTransform) clone.transform;
+
+			crt.anchorMin = rt.anchorMin;
+			crt.anchorMax = rt.anchorMax;
+			
+			crt.localPosition = Vector3.zero;
+			
+			clone.transform.SetParent(transform, true);
+			clone.GetComponent<Button>().onClick.AddListener(() =>
+			{
+				_button.onClick.Invoke();
+				Destroy(clone.gameObject);
+				Deactivate();
+			});
 		}
 
 		protected override void InitPage(Action callback)

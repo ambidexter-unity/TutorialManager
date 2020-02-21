@@ -1,6 +1,8 @@
 using System;
+using Common.Activatable;
 using Common.TutorialManager;
 using UnityEngine;
+using UnityEngine.UI;
 using Zenject;
 
 namespace Sample
@@ -20,10 +22,18 @@ namespace Sample
 		public bool InstantiatePage(Transform pageContainer, Action<GameObject> callback)
 		{
 			var page = _container.InstantiatePrefabResourceForComponent<ButtonTutorialPage>(
-				"ButtonTutorialPage", pageContainer);
+				"ButtonTutorialPage", pageContainer, new object[] {GetComponent<Button>()});
+			page.ActivatableStateChangedEvent += PageOnActivatableStateChangedEvent;
 			page.Activate();
 			callback?.Invoke(page.gameObject);
 			return true;
+		}
+
+		private void PageOnActivatableStateChangedEvent(IActivatable activatable, ActivatableState state)
+		{
+			if (state != ActivatableState.Inactive) return;
+			activatable.ActivatableStateChangedEvent -= PageOnActivatableStateChangedEvent;
+			CloseTutorialPageEvent?.Invoke(true);
 		}
 
 		public event Action<bool> CloseTutorialPageEvent;
@@ -32,7 +42,10 @@ namespace Sample
 
 		private void Start()
 		{
-			if (_tutorialManager.SetCurrentPage(this)) ;
+			if (_tutorialManager.SetCurrentPage(this))
+			{
+				
+			}
 		}
 	}
 }

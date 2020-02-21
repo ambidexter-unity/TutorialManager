@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Common.PersistentManager;
-using Extensions;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -51,8 +50,7 @@ namespace Common.TutorialManager
 
 			if (_completeData.Value.CompletedPages.Contains(page.Id))
 			{
-				DebugConditional.LogFormat(
-					"Trying to open {0} tutorial page, but this page was already completed.", page.Id);
+				// Trying to open tutorial page, but this page was already completed.
 				return false;
 			}
 
