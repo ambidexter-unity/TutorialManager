@@ -13,12 +13,6 @@ namespace Common.TutorialManager
 		bool SetCurrentPage(ITutorialPage page);
 
 		/// <summary>
-		/// Проверка можно ли показать страницу тутора
-		/// </summary>
-		[Obsolete("Use comparison with CurrentPageId instead.")]
-		bool IsPageShowed(ITutorialPage page);
-
-		/// <summary>
 		/// Флаг, указывающий на активность туториала.
 		/// </summary>
 		bool TutorialIsActive { get; }
@@ -32,5 +26,12 @@ namespace Common.TutorialManager
 		/// Идентификатор текущей открытой страницы туториала.
 		/// </summary>
 		string CurrentPageId { get; }
+
+		/// <summary>
+		/// Возвращает состояние для страницы с указанным ключом.
+		/// </summary>
+		/// <param name="pageId">Ключ страницы туториала.</param>
+		/// <returns>Возвращает <code>true</code>, если страница уже была показана.</returns>
+		bool GetPageState(string pageId);
 	}
 }

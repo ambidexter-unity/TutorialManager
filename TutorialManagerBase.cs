@@ -70,18 +70,9 @@ namespace Common.TutorialManager
 
 		protected abstract bool InstantiateCurrentPage();
 
-		public bool IsPageShowed(ITutorialPage page)
+		public bool GetPageState(string pageId)
 		{
-			Assert.IsNotNull(page);
-
-			if (CurrentPage?.Id == page.Id) return true;
-
-			if (_completeData.Value.CompletedPages.Contains(page.Id))
-			{
-				return true;
-			}
-
-			return false;
+			return _completeData.Value.CompletedPages.Contains(pageId);
 		}
 
 		public bool TutorialIsActive
@@ -108,8 +99,15 @@ namespace Common.TutorialManager
 
 			if (complete)
 			{
-				_completeData.Value.CompletedPages.Add(CurrentPage.Id);
-				PersistentManager.Persist(_completeData.Value, true);
+				if (!_completeData.Value.CompletedPages.Contains(CurrentPage.Id))
+				{
+					_completeData.Value.CompletedPages.Add(CurrentPage.Id);
+					PersistentManager.Persist(_completeData.Value, true);
+				}
+				else
+				{
+					Debug.LogErrorFormat("Tutorial page with Id [{0}] was multiple completed.", CurrentPage.Id);
+				}
 			}
 
 			CurrentPage = null;
