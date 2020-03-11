@@ -38,7 +38,7 @@ namespace Common.TutorialManager
 
 		// ITutorialManager
 
-		public void Initialize(params object[] args)
+		public virtual void Initialize(params object[] args)
 		{
 #if DISABLE_TUTORIAL
 			IsReady = true;
