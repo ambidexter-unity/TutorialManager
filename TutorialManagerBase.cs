@@ -34,7 +34,7 @@ namespace Common.TutorialManager
 		private bool _tutorialIsActive;
 		protected ITutorialPage CurrentPage { get; private set; }
 
-		private readonly CompletedTutorialPagesData _completeData = new CompletedTutorialPagesData();
+		protected readonly CompletedTutorialPagesData CompletedData = new CompletedTutorialPagesData();
 
 		// ITutorialManager
 
@@ -47,7 +47,7 @@ namespace Common.TutorialManager
 			{
 				if (data != null)
 				{
-					_completeData.Restore(data);
+					CompletedData.Restore(data);
 				}
 				else
 				{
@@ -121,7 +121,7 @@ namespace Common.TutorialManager
 #if DISABLE_TUTORIAL
 			return true;
 #else
-			return _completeData.CompletedPages.Contains(pageId);
+			return CompletedData.CompletedPages.Contains(pageId);
 #endif
 		}
 
@@ -151,9 +151,9 @@ namespace Common.TutorialManager
 			{
 				if (!GetPageState(CurrentPage.Id))
 				{
-					_completeData.CompletedPages.Add(CurrentPage.Id);
+					CompletedData.CompletedPages.Add(CurrentPage.Id);
 					var dataClone = new CompletedTutorialPagesData();
-					dataClone.Restore(_completeData);
+					dataClone.Restore(CompletedData);
 					PersistCompleteTutorialPagesData(dataClone, b =>
 					{
 						if (!b) Debug.LogError("Failed to persist TutorialManager data.");
