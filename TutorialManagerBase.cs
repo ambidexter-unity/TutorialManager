@@ -1,5 +1,8 @@
+//#define DISABLE_TUTORIAL
+
 using System;
 using System.Collections.Generic;
+using Common.GameService;
 using Common.PersistentManager;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -27,28 +30,66 @@ namespace Common.TutorialManager
 
 	public abstract class TutorialManagerBase : ITutorialManager
 	{
+		private bool _isReady;
 		private bool _tutorialIsActive;
 		protected ITutorialPage CurrentPage { get; private set; }
 
-		private readonly Lazy<CompletedTutorialPagesData> _completeData;
-
-		protected abstract IPersistentManager PersistentManager { get; }
-
-		protected TutorialManagerBase()
-		{
-			_completeData = new Lazy<CompletedTutorialPagesData>(
-				() => PersistentManager.GetPersistentValue<CompletedTutorialPagesData>());
-		}
+		private readonly CompletedTutorialPagesData _completeData = new CompletedTutorialPagesData();
 
 		// ITutorialManager
 
+		public void Initialize(params object[] args)
+		{
+#if DISABLE_TUTORIAL
+			IsReady = true;
+#else
+			RestoreCompleteTutorialPagesData(data =>
+			{
+				if (data != null)
+				{
+					_completeData.Restore(data);
+				}
+				else
+				{
+					Debug.LogError("Failed to restore complete tutorial pages data.");
+				}
+
+				IsReady = true;
+			});
+#endif
+		}
+
+		protected abstract void RestoreCompleteTutorialPagesData(Action<CompletedTutorialPagesData> callback);
+
+		public bool IsReady
+		{
+			get => _isReady;
+			private set
+			{
+				if (value == _isReady) return;
+				_isReady = value;
+				Assert.IsTrue(_isReady);
+				ReadyEvent?.Invoke(this);
+			}
+		}
+
+		public event GameServiceReadyHandler ReadyEvent;
+
 		public bool SetCurrentPage(ITutorialPage page)
 		{
+			if (!IsReady)
+			{
+				throw new Exception("TutorialManager must be initialized.");
+			}
+
 			Assert.IsNotNull(page);
 
+#if DISABLE_TUTORIAL
+			return false;
+#else
 			if (CurrentPage?.Id == page.Id) return true;
 
-			if (_completeData.Value.CompletedPages.Contains(page.Id))
+			if (GetPageState(page.Id))
 			{
 				// Trying to open tutorial page, but this page was already completed.
 				return false;
@@ -66,13 +107,22 @@ namespace Common.TutorialManager
 			TutorialIsActive = true;
 
 			return InstantiateCurrentPage();
+#endif
 		}
 
 		protected abstract bool InstantiateCurrentPage();
 
 		public bool GetPageState(string pageId)
 		{
-			return _completeData.Value.CompletedPages.Contains(pageId);
+			if (!IsReady)
+			{
+				throw new Exception("TutorialManager must be initialized.");
+			}
+#if DISABLE_TUTORIAL
+			return true;
+#else
+			return _completeData.CompletedPages.Contains(pageId);
+#endif
 		}
 
 		public bool TutorialIsActive
@@ -99,10 +149,15 @@ namespace Common.TutorialManager
 
 			if (complete)
 			{
-				if (!_completeData.Value.CompletedPages.Contains(CurrentPage.Id))
+				if (!GetPageState(CurrentPage.Id))
 				{
-					_completeData.Value.CompletedPages.Add(CurrentPage.Id);
-					PersistentManager.Persist(_completeData.Value, true);
+					_completeData.CompletedPages.Add(CurrentPage.Id);
+					var dataClone = new CompletedTutorialPagesData();
+					dataClone.Restore(_completeData);
+					PersistCompleteTutorialPagesData(dataClone, b =>
+					{
+						if (!b) Debug.LogError("Failed to persist TutorialManager data.");
+					});
 				}
 				else
 				{
@@ -113,5 +168,8 @@ namespace Common.TutorialManager
 			CurrentPage = null;
 			TutorialIsActive = false;
 		}
+
+		protected abstract void PersistCompleteTutorialPagesData(CompletedTutorialPagesData data,
+			Action<bool> readyCallback);
 	}
 }
