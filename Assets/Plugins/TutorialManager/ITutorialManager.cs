@@ -1,11 +1,11 @@
-using System;
+using Common.GameService;
 
 // ReSharper disable once CheckNamespace
 namespace Common.TutorialManager
 {
 	public delegate void TutorialIsActiveHandler(ITutorialManager manager, bool tutorialIsActive);
 
-	public interface ITutorialManager
+	public interface ITutorialManager : IGameService
 	{
 		/// <summary>
 		/// Отображаемая страница туториала.

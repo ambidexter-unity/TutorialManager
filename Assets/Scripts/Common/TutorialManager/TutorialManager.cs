@@ -1,6 +1,8 @@
+using System;
 using Common.PersistentManager;
 using UnityEngine;
 using Zenject;
+using Object = UnityEngine.Object;
 
 namespace Common.TutorialManager
 {
@@ -28,7 +30,16 @@ namespace Common.TutorialManager
 			}
 		}
 
-		protected override IPersistentManager PersistentManager => _persistentManager;
+		protected override void RestoreCompleteTutorialPagesData(Action<CompletedTutorialPagesData> callback)
+		{
+			callback?.Invoke(_persistentManager.GetPersistentValue<CompletedTutorialPagesData>());
+		}
+
+		protected override void PersistCompleteTutorialPagesData(CompletedTutorialPagesData data, Action<bool> readyCallback)
+		{
+			_persistentManager.Persist(data, true);
+			readyCallback?.Invoke(true);
+		}
 
 		protected override bool InstantiateCurrentPage()
 		{
