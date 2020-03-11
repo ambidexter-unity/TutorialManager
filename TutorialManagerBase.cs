@@ -64,7 +64,7 @@ namespace Common.TutorialManager
 		public bool IsReady
 		{
 			get => _isReady;
-			private set
+			protected set
 			{
 				if (value == _isReady) return;
 				_isReady = value;
