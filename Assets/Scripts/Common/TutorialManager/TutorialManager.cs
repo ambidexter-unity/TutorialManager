@@ -43,8 +43,13 @@ namespace Common.TutorialManager
 
 		protected override bool InstantiateCurrentPage()
 		{
-			CreateLocker();
-			return CurrentPage.InstantiatePage(_pageContentContainer, null);
+			if (CurrentPage.InstantiatePage(_pageContentContainer, null))
+			{
+				CreateLocker();
+				return true;
+			}
+
+			return false;
 		}
 
 		private void CreateLocker()
