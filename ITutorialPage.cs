@@ -18,13 +18,28 @@ namespace Common.TutorialManager
 		/// Инстанцировать представление страницы.
 		/// </summary>
 		/// <param name="pageContainer">Контейнер страницы в менеджере туториала.</param>
+		/// <param name="pageCurrentCompleteValue">Текущее восстановленное значение завершенности туториала.</param>
 		/// <param name="callback">Коллбек, в который будет возвращен экземпляр созданной страницы.</param>
 		/// <returns>Возвращает <code>true</code>, если страница будет создана.</returns>
-		bool InstantiatePage(Transform pageContainer, Action<GameObject> callback);
+		bool InstantiatePage(Transform pageContainer, int pageCurrentCompleteValue, Action<GameObject> callback);
 
 		/// <summary>
-		/// Событие закрытия страницы туториала. В событии передается true, если туториал завершен, иначе false.
+		/// Значение полного завершения туториала.
 		/// </summary>
-		event Action<bool> CloseTutorialPageEvent;
+		int PageFinalCompleteValue { get; }
+
+		int PageCurrentCompleteValue { get; }
+
+		/// <summary>
+		/// Событие завершения этапа страницы туториала. В событии передается текущее значение завершенности туториала,
+		/// если туториал завершен, значение будет равно PageCompleteValue, иначе меньше.
+		/// </summary>
+		event Action<int> CompleteTutorialPageEvent;
+
+		/// <summary>
+		/// Событие принудительного завершения выполнения страницы туториала. В событии передается флаг, указывающий
+		/// отмечать страницу как завершенную.
+		/// </summary>
+		event Action<bool> TerminateTutorialPage;
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using Common.GameService;
 
 // ReSharper disable once CheckNamespace
@@ -32,6 +33,14 @@ namespace Common.TutorialManager
 		/// </summary>
 		/// <param name="pageId">Ключ страницы туториала.</param>
 		/// <returns>Возвращает <code>true</code>, если страница уже была показана.</returns>
-		bool GetPageState(string pageId);
+		bool IsPageFinished(string pageId);
+
+		/// <summary>
+		/// Восстановить страницу туториала.
+		/// </summary>
+		/// <param name="pageId">Идентификатор восстанавливаемой страницы.</param>
+		/// <param name="pageCurrentCompleteValue">Восстанавливаемое текущее значение завершенности страницы.</param>
+		/// <param name="readyCallback">Коллбек, вызываемый по завершении восстановления.</param>
+		void RestoreTutorialPage(string pageId, int pageCurrentCompleteValue = 0, Action<bool> readyCallback = null);
 	}
 }
