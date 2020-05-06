@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Common.GameService;
 using Common.PersistentManager;
 using UnityEngine;
@@ -11,12 +12,51 @@ using UnityEngine.Assertions;
 namespace Common.TutorialManager
 {
 	[Serializable]
+	public class CompletedTutorialPagesDataRecord : ICloneable, IEquatable<CompletedTutorialPagesDataRecord>
+	{
+		// ReSharper disable InconsistentNaming
+		public string PageId;
+		public int CompletedValue;
+
+		public bool IsFinished;
+		// ReSharper restore InconsistentNaming
+
+		public object Clone()
+		{
+			return new CompletedTutorialPagesDataRecord
+			{
+				PageId = PageId,
+				CompletedValue = CompletedValue,
+				IsFinished = IsFinished
+			};
+		}
+
+		public bool Equals(CompletedTutorialPagesDataRecord other)
+		{
+			return other != null && PageId == other.PageId && CompletedValue == other.CompletedValue &&
+			       IsFinished == other.IsFinished;
+		}
+
+		public void SetValues(CompletedTutorialPagesDataRecord other)
+		{
+			SetValues(other.PageId, other.CompletedValue, other.IsFinished);
+		}
+
+		public void SetValues(string pageId, int completedValue, bool isFinished)
+		{
+			PageId = pageId;
+			CompletedValue = completedValue;
+			IsFinished = isFinished;
+		}
+	}
+
+	[Serializable]
 	public class CompletedTutorialPagesData : IPersistent<CompletedTutorialPagesData>
 	{
 		public string PersistentId => "completed_tutorial_pages";
 
 		// ReSharper disable once InconsistentNaming
-		public List<string> CompletedPages = new List<string>();
+		public List<CompletedTutorialPagesDataRecord> CompletedPages = new List<CompletedTutorialPagesDataRecord>();
 
 		public void Restore<T1>(T1 data) where T1 : IPersistent<CompletedTutorialPagesData>
 		{
@@ -24,7 +64,8 @@ namespace Common.TutorialManager
 			Assert.IsNotNull(src);
 
 			CompletedPages.Clear();
-			CompletedPages.AddRange(src.CompletedPages);
+			CompletedPages.AddRange(src.CompletedPages.Select(record => record.Clone())
+				.Cast<CompletedTutorialPagesDataRecord>());
 		}
 	}
 
@@ -89,7 +130,7 @@ namespace Common.TutorialManager
 #else
 			if (CurrentPage?.Id == page.Id) return true;
 
-			if (GetPageState(page.Id))
+			if (IsPageFinished(page.Id))
 			{
 				// Trying to open tutorial page, but this page was already completed.
 				return false;
@@ -99,20 +140,21 @@ namespace Common.TutorialManager
 			{
 				Debug.LogErrorFormat("Current tutorial page {0} wasn't closed before the next page.",
 					CurrentPage.Id);
-				OnClosePage(false);
+				OnTerminatePage(false);
 			}
 
 			CurrentPage = page;
-			CurrentPage.CloseTutorialPageEvent += OnClosePage;
+			CurrentPage.CompleteTutorialPageEvent += OnCompletePage;
+			CurrentPage.TerminateTutorialPage += OnTerminatePage;
 			TutorialIsActive = true;
 
-			return InstantiateCurrentPage();
+			return InstantiateCurrentPage(page.PageCurrentCompleteValue);
 #endif
 		}
 
-		protected abstract bool InstantiateCurrentPage();
+		protected abstract bool InstantiateCurrentPage(int pageCurrentCompleteValue);
 
-		public bool GetPageState(string pageId)
+		public bool IsPageFinished(string pageId)
 		{
 			if (!IsReady)
 			{
@@ -121,7 +163,8 @@ namespace Common.TutorialManager
 #if DISABLE_TUTORIAL
 			return true;
 #else
-			return CompletedData.CompletedPages.Contains(pageId);
+			var record = CompletedData.CompletedPages.SingleOrDefault(dataRecord => dataRecord.PageId == pageId);
+			return record?.IsFinished ?? false;
 #endif
 		}
 
@@ -136,37 +179,152 @@ namespace Common.TutorialManager
 			}
 		}
 
+		public void RestoreTutorialPage(string pageId, int pageCurrentCompleteValue = 0,
+			Action<bool> readyCallback = null)
+		{
+			var doPersist = false;
+			var record = CompletedData.CompletedPages.SingleOrDefault(dataRecord => dataRecord.PageId == CurrentPageId);
+			if (record == null)
+			{
+				if (pageCurrentCompleteValue > 0)
+				{
+					record = new CompletedTutorialPagesDataRecord
+					{
+						PageId = pageId,
+						CompletedValue = pageCurrentCompleteValue
+					};
+					CompletedData.CompletedPages.Add(record);
+					doPersist = true;
+				}
+			}
+			else
+			{
+				if (pageCurrentCompleteValue > 0)
+				{
+					var restoredRecord = new CompletedTutorialPagesDataRecord
+					{
+						PageId = pageId,
+						CompletedValue = pageCurrentCompleteValue
+					};
+					if (!record.Equals(restoredRecord))
+					{
+						record.SetValues(restoredRecord);
+						doPersist = true;
+					}
+				}
+				else
+				{
+					CompletedData.CompletedPages.Remove(record);
+					doPersist = true;
+				}
+			}
+
+			if (doPersist)
+			{
+				var dataClone = new CompletedTutorialPagesData();
+				dataClone.Restore(CompletedData);
+				PersistCompleteTutorialPagesData(dataClone, readyCallback);
+			}
+			else
+			{
+				readyCallback?.Invoke(true);
+			}
+		}
+
 		public event TutorialIsActiveHandler TutorialIsActiveChangeEvent;
 
 		public string CurrentPageId => CurrentPage?.Id;
 
 		// \ITutorialManager
 
-		protected virtual void OnClosePage(bool complete)
+		private void OnCompletePage(int pageCurrentCompleteValue)
 		{
 			Assert.IsNotNull(CurrentPage);
-			CurrentPage.CloseTutorialPageEvent -= OnClosePage;
 
-			if (complete)
+			var newRecord = new CompletedTutorialPagesDataRecord
 			{
-				if (!GetPageState(CurrentPage.Id))
-				{
-					CompletedData.CompletedPages.Add(CurrentPage.Id);
-					var dataClone = new CompletedTutorialPagesData();
-					dataClone.Restore(CompletedData);
-					PersistCompleteTutorialPagesData(dataClone, b =>
-					{
-						if (!b) Debug.LogError("Failed to persist TutorialManager data.");
-					});
-				}
-				else
-				{
-					Debug.LogErrorFormat("Tutorial page with Id [{0}] was multiple completed.", CurrentPage.Id);
-				}
+				PageId = CurrentPageId,
+				CompletedValue = pageCurrentCompleteValue,
+				IsFinished = pageCurrentCompleteValue >= CurrentPage.PageFinalCompleteValue
+			};
+
+			bool doPersist;
+			var record = CompletedData.CompletedPages.SingleOrDefault(dataRecord => dataRecord.PageId == CurrentPageId);
+			if (record == null)
+			{
+				record = newRecord;
+				CompletedData.CompletedPages.Add(record);
+				doPersist = true;
 			}
+			else
+			{
+				doPersist = !record.Equals(newRecord);
+				record.SetValues(newRecord);
+			}
+
+			if (doPersist)
+			{
+				var dataClone = new CompletedTutorialPagesData();
+				dataClone.Restore(CompletedData);
+				PersistCompleteTutorialPagesData(dataClone, b =>
+				{
+					if (!b) Debug.LogError("Failed to persist TutorialManager data.");
+				});
+			}
+
+			if (record.IsFinished)
+			{
+				FinishPage(CurrentPage);
+
+				CurrentPage = null;
+				TutorialIsActive = false;
+			}
+		}
+
+		private void OnTerminatePage(bool markAsFinished)
+		{
+			Assert.IsNotNull(CurrentPage);
+
+			bool doPersist = true;
+			var record = CompletedData.CompletedPages.SingleOrDefault(dataRecord => dataRecord.PageId == CurrentPageId);
+			if (record == null)
+			{
+				record = new CompletedTutorialPagesDataRecord
+				{
+					PageId = CurrentPageId,
+					IsFinished = markAsFinished
+				};
+				CompletedData.CompletedPages.Add(record);
+			}
+			else if (markAsFinished)
+			{
+				record.IsFinished = true;
+			}
+			else
+			{
+				doPersist = false;
+			}
+
+			if (doPersist)
+			{
+				var dataClone = new CompletedTutorialPagesData();
+				dataClone.Restore(CompletedData);
+				PersistCompleteTutorialPagesData(dataClone, b =>
+				{
+					if (!b) Debug.LogError("Failed to persist TutorialManager data.");
+				});
+			}
+
+			FinishPage(CurrentPage);
 
 			CurrentPage = null;
 			TutorialIsActive = false;
+		}
+
+		protected virtual void FinishPage(ITutorialPage page)
+		{
+			CurrentPage.CompleteTutorialPageEvent -= OnCompletePage;
+			CurrentPage.TerminateTutorialPage -= OnTerminatePage;
 		}
 
 		protected abstract void PersistCompleteTutorialPagesData(CompletedTutorialPagesData data,

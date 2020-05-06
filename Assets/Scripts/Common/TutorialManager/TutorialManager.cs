@@ -35,15 +35,16 @@ namespace Common.TutorialManager
 			callback?.Invoke(_persistentManager.GetPersistentValue<CompletedTutorialPagesData>());
 		}
 
-		protected override void PersistCompleteTutorialPagesData(CompletedTutorialPagesData data, Action<bool> readyCallback)
+		protected override void PersistCompleteTutorialPagesData(CompletedTutorialPagesData data,
+			Action<bool> readyCallback)
 		{
 			_persistentManager.Persist(data, true);
 			readyCallback?.Invoke(true);
 		}
 
-		protected override bool InstantiateCurrentPage()
+		protected override bool InstantiateCurrentPage(int pageCurrentCompleteValue)
 		{
-			if (CurrentPage.InstantiatePage(_pageContentContainer, null))
+			if (CurrentPage.InstantiatePage(_pageContentContainer, pageCurrentCompleteValue, null))
 			{
 				CreateLocker();
 				return true;
@@ -68,9 +69,9 @@ namespace Common.TutorialManager
 			_locker = null;
 		}
 
-		protected override void OnClosePage(bool complete)
+		protected override void FinishPage(ITutorialPage page)
 		{
-			base.OnClosePage(complete);
+			base.FinishPage(page);
 
 			foreach (Transform child in _pageContentContainer)
 			{

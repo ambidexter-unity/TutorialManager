@@ -19,8 +19,15 @@ namespace Sample
 
 		public string Id => "test_button_tutorial";
 
-		public bool InstantiatePage(Transform pageContainer, Action<GameObject> callback)
+		public bool InstantiatePage(Transform pageContainer, int pageCurrentCompleteValue, Action<GameObject> callback)
 		{
+			PageCurrentCompleteValue = pageCurrentCompleteValue;
+			if (pageCurrentCompleteValue >= PageFinalCompleteValue)
+			{
+				Debug.LogErrorFormat("Trying to instantiate completed page {0}.", Id);
+				return false;
+			}
+
 			var page = _container.InstantiatePrefabResourceForComponent<ButtonTutorialPage>(
 				"ButtonTutorialPage", pageContainer, new object[] {GetComponent<Button>()});
 			page.ActivatableStateChangedEvent += PageOnActivatableStateChangedEvent;
@@ -32,11 +39,19 @@ namespace Sample
 		private void PageOnActivatableStateChangedEvent(IActivatable activatable, ActivatableState state)
 		{
 			if (state != ActivatableState.Inactive) return;
+
 			activatable.ActivatableStateChangedEvent -= PageOnActivatableStateChangedEvent;
-			CloseTutorialPageEvent?.Invoke(true);
+			PageCurrentCompleteValue += 1;
+			CompleteTutorialPageEvent?.Invoke(PageCurrentCompleteValue);
 		}
 
-		public event Action<bool> CloseTutorialPageEvent;
+		public event Action<int> CompleteTutorialPageEvent;
+
+		public event Action<bool> TerminateTutorialPage;
+
+		public int PageFinalCompleteValue => 1;
+
+		public int PageCurrentCompleteValue { get; private set; }
 
 		// \ITutorialPage
 
@@ -44,7 +59,6 @@ namespace Sample
 		{
 			if (_tutorialManager.SetCurrentPage(this))
 			{
-				
 			}
 		}
 	}
