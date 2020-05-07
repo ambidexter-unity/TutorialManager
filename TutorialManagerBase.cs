@@ -191,7 +191,7 @@ namespace Common.TutorialManager
 			Action<bool> readyCallback = null)
 		{
 			var doPersist = false;
-			var record = CompletedData.CompletedPages.SingleOrDefault(dataRecord => dataRecord.PageId == CurrentPageId);
+			var record = CompletedData.CompletedPages.SingleOrDefault(dataRecord => dataRecord.PageId == pageId);
 			if (record == null)
 			{
 				if (pageCurrentCompleteValue > 0)
