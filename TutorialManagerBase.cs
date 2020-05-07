@@ -147,7 +147,8 @@ namespace Common.TutorialManager
 			CurrentPage.TerminateTutorialPageEvent += OnTerminatePageEvent;
 			TutorialIsActive = true;
 
-			return InstantiateCurrentPage(page.PageCurrentCompleteValue);
+			var record = CompletedData.CompletedPages.SingleOrDefault(dataRecord => dataRecord.PageId == page.Id);
+			return InstantiateCurrentPage(record?.CompletedValue ?? 0);
 #endif
 		}
 
