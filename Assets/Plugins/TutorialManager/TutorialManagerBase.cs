@@ -167,6 +167,14 @@ namespace Common.TutorialManager
 #endif
 		}
 
+		public bool IsPageCompleteUntil(string pageId, int pageCompleteValue)
+		{
+			if (IsPageFinished(pageId)) return true;
+
+			var record = CompletedData.CompletedPages.SingleOrDefault(dataRecord => dataRecord.PageId == pageId);
+			return (record?.CompletedValue ?? 0) >= pageCompleteValue;
+		}
+
 		public bool TutorialIsActive
 		{
 			get => _tutorialIsActive;

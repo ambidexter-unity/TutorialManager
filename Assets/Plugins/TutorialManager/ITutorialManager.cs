@@ -29,11 +29,20 @@ namespace Common.TutorialManager
 		string CurrentPageId { get; }
 
 		/// <summary>
-		/// Возвращает состояние для страницы с указанным ключом.
+		/// Возвращает состояние завершения для страницы с указанным ключом.
 		/// </summary>
 		/// <param name="pageId">Ключ страницы туториала.</param>
 		/// <returns>Возвращает <code>true</code>, если страница уже была показана.</returns>
 		bool IsPageFinished(string pageId);
+
+		/// <summary>
+		/// Возвращает состояние завершенности для страницы с указанным ключом.
+		/// </summary>
+		/// <param name="pageId">Ключ страницы туториала.</param>
+		/// <param name="pageCompleteValue">Исследуемое знаение завершенности.</param>
+		/// <returns>Возвращает <code>true</code>, если значение завершенности страницы больше
+		/// или равно исследуемому значению.</returns>
+		bool IsPageCompleteUntil(string pageId, int pageCompleteValue);
 
 		/// <summary>
 		/// Восстановить страницу туториала.
