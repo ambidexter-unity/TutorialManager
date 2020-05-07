@@ -17,7 +17,6 @@ namespace Common.TutorialManager
 		// ReSharper disable InconsistentNaming
 		public string PageId;
 		public int CompletedValue;
-
 		public bool IsFinished;
 		// ReSharper restore InconsistentNaming
 
@@ -140,12 +139,12 @@ namespace Common.TutorialManager
 			{
 				Debug.LogErrorFormat("Current tutorial page {0} wasn't closed before the next page.",
 					CurrentPage.Id);
-				OnTerminatePage(false);
+				OnTerminatePageEvent(false);
 			}
 
 			CurrentPage = page;
 			CurrentPage.CompleteTutorialPageEvent += OnCompletePage;
-			CurrentPage.TerminateTutorialPage += OnTerminatePage;
+			CurrentPage.TerminateTutorialPageEvent += OnTerminatePageEvent;
 			TutorialIsActive = true;
 
 			return InstantiateCurrentPage(page.PageCurrentCompleteValue);
@@ -281,7 +280,7 @@ namespace Common.TutorialManager
 			}
 		}
 
-		private void OnTerminatePage(bool markAsFinished)
+		private void OnTerminatePageEvent(bool markAsFinished)
 		{
 			Assert.IsNotNull(CurrentPage);
 
@@ -324,7 +323,7 @@ namespace Common.TutorialManager
 		protected virtual void FinishPage(ITutorialPage page)
 		{
 			CurrentPage.CompleteTutorialPageEvent -= OnCompletePage;
-			CurrentPage.TerminateTutorialPage -= OnTerminatePage;
+			CurrentPage.TerminateTutorialPageEvent -= OnTerminatePageEvent;
 		}
 
 		protected abstract void PersistCompleteTutorialPagesData(CompletedTutorialPagesData data,

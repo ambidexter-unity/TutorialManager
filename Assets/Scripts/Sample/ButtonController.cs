@@ -47,7 +47,7 @@ namespace Sample
 
 		public event Action<int> CompleteTutorialPageEvent;
 
-		public event Action<bool> TerminateTutorialPage;
+		public event Action<bool> TerminateTutorialPageEvent;
 
 		public int PageFinalCompleteValue => 1;
 

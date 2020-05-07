@@ -40,6 +40,6 @@ namespace Common.TutorialManager
 		/// Событие принудительного завершения выполнения страницы туториала. В событии передается флаг, указывающий
 		/// отмечать страницу как завершенную.
 		/// </summary>
-		event Action<bool> TerminateTutorialPage;
+		event Action<bool> TerminateTutorialPageEvent;
 	}
 }
