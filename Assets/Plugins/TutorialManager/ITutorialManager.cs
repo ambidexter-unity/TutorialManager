@@ -49,7 +49,9 @@ namespace Common.TutorialManager
 		/// </summary>
 		/// <param name="pageId">Идентификатор восстанавливаемой страницы.</param>
 		/// <param name="pageCurrentCompleteValue">Восстанавливаемое текущее значение завершенности страницы.</param>
+		/// <param name="markAsFinished">Пометить восстанавливаемую страницу как завершенную.</param>
 		/// <param name="readyCallback">Коллбек, вызываемый по завершении восстановления.</param>
-		void RestoreTutorialPage(string pageId, int pageCurrentCompleteValue = 0, Action<bool> readyCallback = null);
+		void RestoreTutorialPage(string pageId, int pageCurrentCompleteValue = 0,
+			bool markAsFinished = false, Action<bool> readyCallback = null);
 	}
 }
