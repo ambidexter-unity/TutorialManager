@@ -188,7 +188,7 @@ namespace Common.TutorialManager
 		}
 
 		public void RestoreTutorialPage(string pageId, int pageCurrentCompleteValue = 0,
-			Action<bool> readyCallback = null)
+			bool markAsFinished = false, Action<bool> readyCallback = null)
 		{
 			var doPersist = false;
 			var record = CompletedData.CompletedPages.SingleOrDefault(dataRecord => dataRecord.PageId == pageId);
@@ -199,7 +199,8 @@ namespace Common.TutorialManager
 					record = new CompletedTutorialPagesDataRecord
 					{
 						PageId = pageId,
-						CompletedValue = pageCurrentCompleteValue
+						CompletedValue = pageCurrentCompleteValue,
+						IsFinished = markAsFinished
 					};
 					CompletedData.CompletedPages.Add(record);
 					doPersist = true;
@@ -212,7 +213,8 @@ namespace Common.TutorialManager
 					var restoredRecord = new CompletedTutorialPagesDataRecord
 					{
 						PageId = pageId,
-						CompletedValue = pageCurrentCompleteValue
+						CompletedValue = pageCurrentCompleteValue,
+						IsFinished = markAsFinished
 					};
 					if (!record.Equals(restoredRecord))
 					{
